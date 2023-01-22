@@ -1,0 +1,48 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cortex-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cortex
+  template:
+    metadata:
+      labels:
+        app: cortex
+    spec:
+      containers:
+      - name: cortex
+        image: ubuntu/cortex:edge
+        volumeMounts:
+        - name: cortex-config-volume
+          mountPath: /etc/cortex/cortex.yaml
+          subPath: cortex.yaml
+        ports:
+        - containerPort: 9009
+          name: cortex
+          protocol: TCP
+      volumes:
+        - name: cortex-config-volume
+          configMap:
+            name: cortex-config
+            items:
+            - key: main-config
+              path: cortex.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cortex-service
+spec:
+  type: NodePort
+  selector:
+    app: cortex
+  ports:
+  - protocol: TCP
+    port: 9009
+    targetPort: 9009
+    nodePort: 32709
+    name: cortex
